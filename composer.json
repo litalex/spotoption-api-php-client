@@ -1,0 +1,25 @@
+{
+    "name": "algomonster/spotoption-api-php-client",
+    "description": "API Client for integration with SpotOption binary options brands",
+    "type": "libraty",
+    "keywords": ["Trading", "Binary Options", "Trade bot"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alexander Emelyanov",
+            "email": "alexander.emelyanov@outlook.com"
+        },
+        {
+            "name": "Gleb Volodin",
+            "email": "glebvga@gmail.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/algomonster/spotoption-api-php-client/issues?state=open",
+        "source": "https://github.com/algomonster/spotoption-api-php-client"
+    },
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "autoload": {"psr-4": {"Algomonster\\SpotOptionApi\\": "src/"}}
+}
