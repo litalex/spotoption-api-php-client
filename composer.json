@@ -19,7 +19,8 @@
         "source": "https://github.com/algomonster/spotoption-api-php-client"
     },
     "require": {
-        "php": ">=5.4.0"
+        "php": ">=5.4.0",
+        "guzzlehttp/guzzle": "~6.0"
     },
-    "autoload": {"psr-4": {"Algomonster\\SpotOptionApi\\": "src/"}}
+    "autoload": {"psr-4": {"Algomonster\\SpotOption\\": "src/"}}
 }

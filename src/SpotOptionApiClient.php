@@ -1,10 +1,12 @@
 <?php
 
 
-namespace Algomonster\SpotOptionApi;
+namespace Algomonster\SpotOption;
+
+use GuzzleHttp\Client;
 
 
-class SpotOptionApiClient {
+class Client {
     
 
     /**
@@ -56,6 +58,36 @@ class SpotOptionApiClient {
      */
     public $addToRequest = '';
 
+    private $httpClient;
+
+
+    public function __construct($options = []){
+        $this->configure($options);
+    }
+
+
+    public function configure($options){
+        
+        $unsetVars = [];
+
+        foreach($this as $key => $value) {
+            if (array_key_exists($key, $options)){
+                $this->$key = $options->$key;
+                if(empty($this->$key)){
+                    $unsetVars[] = $key;
+                }
+            }
+        }
+
+        if(!empty($unsetVars)){
+            throw new Exception("API client misconfiguration, missing parameters: " . join(",", $unsetVars));
+        }
+
+        $url = $this->protocol . "://" . $this->server;
+
+        $this->httpClient = new GuzzleHttp\Client(['base_uri' => $url]);
+    }
+
 
     protected function sendRequest($data){
         $apiData = array(
@@ -66,35 +98,23 @@ class SpotOptionApiClient {
         foreach($data as $variable => $value){
             $apiData[$variable] = $value;
         }
-        $url = $this->protocol . "://" . $this->server ."/". $this->script;
+        
+        $response = $httpClient->request('POST', $this->script, ['query'=>$apiData]);
 
+        $code = $response->getStatusCode(); 
+        $reason = $response->getReasonPhrase();
+        $body = $response->getBody();
 
-        $apiData = http_build_query($apiData);
-
-        if ($this->addToRequest){
-            $apiData .= ("&" . $this->addToRequest);
+        if ($code != 200){
+            throw new Exception("Requerst error:". $code . " " . $reason);
         }
 
-        $ch = curl_init($url);
+        $resultString = (string) $body;
 
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $apiData);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_PORT, $this->port);
-
-        // For bank de binary
-
-        $response = curl_exec($ch);
-
-        if ($response === false){
-            $message = curl_error($ch);
-            $code = curl_errno($ch);
-            throw new Exception("CURL error: $code. " . $message);
-        }
-
-        curl_close($ch);
-
-        $result = $this->processResult($response, $apiData);
+        $xmlString = $resultString;
+        $xmlObject = simplexml_load_string($xmlString);
+        $json = json_encode($xmlObject);
+        $result = json_decode($json, TRUE);
 
         return $result;
     }
