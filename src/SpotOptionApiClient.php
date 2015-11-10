@@ -1,12 +1,11 @@
 <?php
-
-
 namespace Algomonster\SpotOption;
+
 
 use GuzzleHttp\Client;
 
 
-class Client {
+class ApiClient {
     
 
     /**
@@ -25,6 +24,12 @@ class Client {
     CONST MODULE_DEPOSITS_LOG = 'DepositsLog';
 
     CONST MODULE_DEPOSITS_LOG_COMMAND_VIEW = 'view';
+
+    CONST MODULE_DEPOSITS_LOG_NAME_FOR_FILTER_CUSTOMER_ID = 'FILTER[customerId]';
+
+    CONST MODULE_DEPOSITS_LOG_NAME_FOR_FILTER_DATE_MIN = 'FILTER[date][min]';
+
+    CONST MODULE_DEPOSITS_LOG_NAME_FOR_FILTER_DATE_MAX = 'FILTER[date][max]';
 
     /**
      * @var string
@@ -54,9 +59,10 @@ class Client {
     public $script = '';
 
     /**
-     * @var string Some string which be added to URL
+     * @var array additional brand-specific parameters to be added to request
      */
-    public $addToRequest = '';
+    public $addToRequest = [];
+
 
     private $httpClient;
 
@@ -68,24 +74,18 @@ class Client {
 
     public function configure($options){
         
-        $unsetVars = [];
 
         foreach($this as $key => $value) {
             if (array_key_exists($key, $options)){
-                $this->$key = $options->$key;
-                if(empty($this->$key)){
-                    $unsetVars[] = $key;
-                }
+                $this->$key = $options[$key];
             }
         }
 
-        if(!empty($unsetVars)){
-            throw new Exception("API client misconfiguration, missing parameters: " . join(",", $unsetVars));
-        }
+        
 
         $url = $this->protocol . "://" . $this->server;
 
-        $this->httpClient = new GuzzleHttp\Client(['base_uri' => $url]);
+        $this->httpClient = new Client(['base_uri' => $url]);
     }
 
 
@@ -98,8 +98,12 @@ class Client {
         foreach($data as $variable => $value){
             $apiData[$variable] = $value;
         }
+        foreach($this->addToRequest as $variable => $value){
+            $apiData[$variable] = $value;
+        }
+
         
-        $response = $httpClient->request('POST', $this->script, ['query'=>$apiData]);
+        $response = $this->httpClient->request('POST', $this->script, ['query'=>$apiData]);
 
         $code = $response->getStatusCode(); 
         $reason = $response->getReasonPhrase();
@@ -116,6 +120,10 @@ class Client {
         $json = json_encode($xmlObject);
         $result = json_decode($json, TRUE);
 
+        if ($result["operation_status"] = "failed") {
+            throw new \Exception("Error Processing Request", 1);       
+        }
+
         return $result;
     }
 
@@ -123,12 +131,31 @@ class Client {
     
 
     
-    public function getDepositsLog()
+    public function getDepositsLog($customerIds=[], $minTime="", $maxTime="")
     {
         $data = [
             static::NAME_FOR_MODULE => static::MODULE_DEPOSITS_LOG,
             static::NAME_FOR_COMMAND => static::MODULE_DEPOSITS_LOG_COMMAND_VIEW,
         ];
+        
+        if (!empty($customerIds)){
+            if (count($customerIds) > 1) {
+                foreach ($customerIds as $customerId) {
+                   $data[static::MODULE_DEPOSITS_LOG_NAME_FOR_FILTER_CUSTOMER_ID . "[]"] = $customerId;
+                }
+            }
+            else {
+                $data[static::MODULE_DEPOSITS_LOG_NAME_FOR_FILTER_CUSTOMER_ID] = $customerId;
+            }
+        }
+
+        if(!empty($minTime)) {
+            $data[static::MODULE_DEPOSITS_LOG_NAME_FOR_FILTER_DATE_MIN] = $minTime;
+        }
+        if(!empty($maxTime)) {
+            $data[static::MODULE_DEPOSITS_LOG_NAME_FOR_FILTER_DATE_MAX] = $maxTime;
+        }
+
         $response = $this->sendRequest($data);
         $result = $response[static::MODULE_DEPOSITS_LOG];
 
