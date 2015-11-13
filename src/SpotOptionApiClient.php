@@ -31,6 +31,23 @@ class ApiClient {
 
     CONST MODULE_DEPOSITS_LOG_NAME_FOR_FILTER_DATE_MAX = 'FILTER[date][max]';
 
+
+    /**
+     * CustomerDeposits module constants
+     */
+    CONST MODULE_CUSTOMER_DEPOSITS = 'CustomerDeposits';
+
+    CONST MODULE_CUSTOMER_DEPOSITS_COMMAND_VIEW = 'view';
+
+    CONST MODULE_CUSTOMER_DEPOSITS_NAME_FOR_FILTER_CAMPAIGN_ID = 'FILTER[campaignId]';
+
+    CONST MODULE_CUSTOMER_DEPOSITS_NAME_FOR_FILTER_STATUS = 'FILTER[status]';
+
+    CONST MODULE_CUSTOMER_DEPOSITS_NAME_FOR_FILTER_DATE_MIN = 'FILTER[requestTime][min]';
+
+    CONST MODULE_CUSTOMER_DEPOSITS_NAME_FOR_FILTER_DATE_MAX = 'FILTER[requestTime][max]';
+
+
     /**
      * @var string
      */
@@ -158,6 +175,32 @@ class ApiClient {
 
         $response = $this->sendRequest($data);
         $result = $response[static::MODULE_DEPOSITS_LOG];
+
+        return $result;
+    }
+
+
+    public function getCustomerDeposits($campaignId, $dateMinString="", $dateMaxString="")
+    {
+        $data = [
+            static::NAME_FOR_MODULE => static::MODULE_CUSTOMER_DEPOSITS,
+            static::NAME_FOR_COMMAND => static::MODULE_CUSTOMER_DEPOSITS_COMMAND_VIEW,
+            static::MODULE_CUSTOMER_DEPOSITS_NAME_FOR_FILTER_STATUS => "approved",
+            static::MODULE_CUSTOMER_DEPOSITS_NAME_FOR_FILTER_CAMPAIGN_ID => $campaignId,
+        ];
+
+        if(!empty($dateMinString)) {
+            $dateMinString = gmdate("Y_m_d H:i:s", strtotime($dateMinString));
+            $data[static::MODULE_CUSTOMER_DEPOSITS_NAME_FOR_FILTER_DATE_MIN] = $dateMinString;
+        }
+
+        if(!empty($dateMaxString)) {
+            $dateMaxString = gmdate("Y_m_d H:i:s", strtotime($dateMaxString));
+            $data[static::MODULE_CUSTOMER_DEPOSITS_NAME_FOR_FILTER_DATE_MAX] = $dateMaxString;
+        }
+        
+        $response = $this->sendRequest($data);
+        $result = $response[static::MODULE_CUSTOMER_DEPOSITS];
 
         return $result;
     }
